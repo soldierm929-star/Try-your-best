@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17243a">
+<title>91 Club WinGo 1 Minute Analyzer — V9</title>
+<style>
+:root{
+  --ink:#172033;--muted:#5d6980;--bg:#f3f5f9;--card:#fff;--line:#d5dbe6;
+  --brand:#243b70;--brand-soft:#e8edf7;--danger:#9c3030;
+  --red:#d64545;--green:#2e9e5b;--violet:#7b52c9;--other:#7a8497;
+  --warn-bg:#fff6df;--warn-ink:#654b13;--err-bg:#fdecec;--err-ink:#7a1f1f;--ok-bg:#e8f6ee;--ok-ink:#17512f;
+  color-scheme:light;
+  font-family:system-ui,-apple-system,"Noto Sans Bengali","Segoe UI",Roboto,sans-serif;
+  color:var(--ink);background:var(--bg)
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));line-height:1.5}
+body.noscroll{overflow:hidden}
+.app{max-width:760px;margin:0 auto}
+header,.panel{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px #1720331a}
+h1{font-size:1.3rem;margin:0 0 4px}
+h2{font-size:1.05rem;margin:0 0 10px}
+p{margin:8px 0}
+.muted,small{color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{min-width:0}
+input,select,button{font:inherit;padding:10px 12px;min-height:44px;border:1px solid var(--line);border-radius:10px;touch-action:manipulation}
+input[type=text],select{flex:1 1 150px;background:#fff;color:var(--ink);max-width:100%}
+input[type=checkbox]{min-height:0;width:22px;height:22px;padding:0;flex:0 0 auto}
+label.check{display:flex;gap:8px;align-items:center;margin-top:8px}
+button{border:0;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;flex:0 0 auto}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.secondary{background:var(--brand-soft);color:var(--brand)}
+button.danger{background:var(--danger)}
+button.small{min-height:40px;padding:6px 12px;font-size:.9rem}
+:focus-visible{outline:3px solid #7aa2ff;outline-offset:2px}
+.hidden{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:#f2f5fb;padding:10px 12px;border-radius:12px;min-width:0}
+.stat b{display:block;font-size:1.1rem;overflow-wrap:anywhere}
+.bar{height:10px;background:var(--brand-soft);border-radius:20px;overflow:hidden;margin:5px 0 8px}
+.fill{height:100%;background:#4267b2;border-radius:20px}
+.notice{padding:11px 12px;border-radius:10px;margin:8px 0;overflow-wrap:anywhere}
+.notice.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.notice.err{background:var(--err-bg);color:var(--err-ink)}
+.notice.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.notice .row{margin-top:8px}
+.status{min-height:1.4em;overflow-wrap:anywhere}
+.subhead{margin:14px 0 6px;font-weight:700}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:7px 8px;border-bottom:1px solid #e6eaf2;text-align:left;white-space:nowrap}
+td small{display:block}
+/* prediction cards */
+.score{border:2px solid #e6eaf2;border-left:8px solid var(--c);border-radius:12px;padding:10px 12px;margin:8px 0;background:#fff}
+.score.top{border-color:var(--c);background:#fbfcff;box-shadow:0 0 0 3px #4267b222}
+.score.tie{border-style:dashed;border-color:var(--c)}
+.score-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.score-head b{font-size:1.1rem}
+.score-head .pct{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;background:var(--c);color:#fff;border-radius:20px;padding:1px 9px;margin-left:6px;vertical-align:middle}
+.score .fill{background:var(--c)}
+.total-line{font-weight:700;margin-top:6px}
+details{margin-top:10px}
+summary{cursor:pointer;font-weight:600;min-height:32px}
+/* recent + history */
+.recent{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-block;border-radius:20px;padding:4px 11px;font-size:.85rem;font-weight:700;color:#fff;background:var(--other)}
+.chip.Red{background:var(--red)}.chip.Green{background:var(--green)}.chip.Violet{background:var(--violet)}
+ul.hist{list-style:none;margin:0;padding:0}
+ul.hist li{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #e6eaf2}
+.rec-main{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}
+.rec-main small{display:block}
+.actions{display:flex;gap:6px}
+.gname{font-weight:600}
+/* modal */
+#modal{position:fixed;inset:0;background:#0b122080;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.sheet{background:#fff;width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+@media(min-width:640px){#modal{align-items:center}.sheet{border-radius:16px}}
+@media(max-width:520px){body{padding:8px}.panel,header{padding:13px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats .stat:last-child:nth-child(odd){grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="app">
+
+<div id="banners"></div>
+
+<header>
+  <h1>91 Club WinGo 1 Minute Analyzer <small>V9</small></h1>
+  <div class="muted">একটি নির্দিষ্ট গেমের Number (০–১০০), Color, Period ID ও পরিসংখ্যান বিশ্লেষণ।</div>
+</header>
+
+<section class="panel" id="gamePanel" style="display:none">
+  <h2>১. গেম নির্বাচন</h2>
+  <div class="row">
+    <select id="gameSelect" aria-label="সক্রিয় গেম"></select>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <input type="text" id="newGame" maxlength="80" placeholder="নতুন গেমের নাম (যেমন: Wingo 1 Min)" aria-label="নতুন গেমের নাম" autocomplete="off">
+    <button id="addGame">গেম যোগ করুন</button>
+  </div>
+  <p class="muted" id="gameHint"></p>
+</section>
+
+<section class="panel" id="entryPanel">
+  <h2>২. ফলাফল যোগ / সম্পাদনা</h2>
+  <p id="targetGame"></p>
+  <div class="row">
+    <input type="text" id="period" maxlength="100" placeholder="Round / Period ID (ঐচ্ছিক)" aria-label="Round বা Period ID" autocomplete="off" inputmode="text">
+  </div>
+  <label class="check"><input type="checkbox" id="requirePeriod"> <span>Period ID বাধ্যতামূলক করুন (প্রতি গেমে ইউনিক হতে হবে)</span></label>
+  <div class="row" style="margin-top:10px">
+    <select id="color" aria-label="নতুন ফলাফলের রং">
+      <option>Red</option><option>Green</option><option>Violet</option><option>Other</option>
+    </select>
+    <button id="add">ফলাফল যোগ করুন</button>
+    <button id="cancelEdit" class="secondary hidden">Edit বাতিল</button>
+  </div>
+  <div id="entryError" class="notice err hidden" role="alert"></div>
+  <p class="muted">প্রতিটি নতুন ফলাফলের জন্য ০–১০০-এর মধ্যে বল নম্বর ও রং দুটোই দিতে হবে। OCR রং পড়তে সাহায্য করতে পারে; নম্বর নিজে যাচাই করে লিখবে।</p>
+  <p id="saved" class="status muted" aria-live="polite"></p>
+</section>
+
+<section class="panel">
+  <h2>৩. তিন রঙের মডেল স্কোর</h2>
+  <div id="forecast"></div>
+</section>
+
+<section class="panel">
+  <h2>৪. বিশ্লেষণ (গণনা)</h2>
+  <div class="row">
+    <label for="range">রেঞ্জ:</label>
+    <select id="range">
+      <option value="10">শেষ ১০টি</option><option value="20">শেষ ২০টি</option>
+      <option value="50">শেষ ৫০টি</option><option value="100">শেষ ১০০টি</option><option value="all">সব</option>
+    </select>
+  </div>
+  <div class="stats" style="margin-top:12px">
+    <div class="stat"><small>বিশ্লেষিত ফলাফল</small><b id="total">0</b></div>
+    <div class="stat"><small>সর্বাধিক এসেছে</small><b id="top">—</b></div>
+    <div class="stat"><small>সর্বশেষ ফল</small><b id="last">—</b></div>
+  </div>
+  <div id="analysis" style="margin-top:14px"></div>
+  <p id="rangeNote" class="muted"></p>
+</section>
+
+<section class="panel">
+  <h2>৫. Number Statistics (০–১০০)</h2>
+  <div class="stats"><div class="stat"><small>সংখ্যাযুক্ত ফলাফল</small><b id="numberedTotal">0</b></div><div class="stat"><small>সবচেয়ে বেশি আসা নম্বর</small><b id="topNumber">—</b></div><div class="stat"><small>সর্বশেষ নম্বর</small><b id="lastNumber">—</b></div></div>
+  <div id="numberAnalysis" style="margin-top:12px"></div>
+  <div class="subhead">সাম্প্রতিক নম্বরের ফ্রিকোয়েন্সি</div><div id="numberFrequency" class="recent"></div>
+</section>
+
+<section class="panel">
+  <h2>৬. প্যাটার্ন ও ঐতিহাসিক পরীক্ষা</h2>
+  <div class="stats">
+    <div class="stat"><small>শেষ ৫টির ধারা</small><b id="streak">—</b></div>
+    <div class="stat"><small>নমুনার আকার (গেমের মোট)</small><b id="sample">0</b></div>
+    <div class="stat"><small>Rolling baseline hit rate</small><b id="accuracy">—</b></div>
+  </div>
+  <p class="muted">Hit rate কেবল পুরোনো ডেটায় আগের ফল দেখে করা সরল পদ্ধতির ঐতিহাসিক পরীক্ষা; এটি ভবিষ্যৎ সাফল্যের সম্ভাবনা নয়। Backtest সবসময় এই গেমের সম্পূর্ণ ইতিহাস ব্যবহার করে (রেঞ্জ অপশন নয়)।</p>
+
+  <div class="subhead">রঙের পরিবর্তন (Transition Count) — নির্বাচিত রেঞ্জ</div>
+  <div class="tablewrap"><table id="transitionTable"><thead><tr><th>আগের \ পরের</th><th>Red</th><th>Green</th><th>Violet</th></tr></thead><tbody></tbody></table></div>
+  <p class="muted">Other আগে বা পরে থাকলে সেই জোড়া এই টেবিলে গোনা হয় না।</p>
+
+  <div class="subhead">ধারাবাহিকতা (Streak) — নির্বাচিত রেঞ্জ</div>
+  <p id="streakDetail" class="muted">পর্যাপ্ত ডেটা নেই।</p>
+
+  <div class="subhead">Rolling backtest — শেষ ১০টি পূর্ববর্তী ফলের ভিত্তিতে</div>
+  <p id="backtestDetail" class="muted">কমপক্ষে ১১টি ফলাফল প্রয়োজন।</p>
+
+  <div class="subhead">Model comparison — Walk-forward test</div>
+  <p class="muted">প্রতিটি রাউন্ডে শুধু তার আগের ডেটা ব্যবহার করে পাঁচটি পদ্ধতির তুলনা। Coverage = মোট পরীক্ষাযোগ্য রাউন্ডের মধ্যে কতটিতে পদ্ধতিটি উত্তর দিয়েছে (tie হলে উত্তর দেয় না)। Other টার্গেট বাদ।</p>
+  <div class="tablewrap"><table id="modelTable"><thead><tr><th>পদ্ধতি</th><th>সঠিক</th><th>Coverage</th><th>Hit rate</th></tr></thead><tbody></tbody></table></div>
+  <p id="modelNote" class="muted">কমপক্ষে ১১টি ফলাফল প্রয়োজন।</p>
+</section>
+
+<section class="panel">
+  <h2>৭. সাম্প্রতিক ফল ও হিস্ট্রি</h2>
+  <div class="subhead" style="margin-top:0">শেষ ১০টি (পুরোনো → নতুন)</div>
+  <div id="recent" class="recent"></div>
+  <div class="row" style="margin:12px 0">
+    <label for="histOrder">সাজানো:</label>
+    <select id="histOrder"><option value="new">নতুন আগে</option><option value="old">পুরোনো আগে</option></select>
+    <button class="secondary small" id="csvGame">CSV (এই গেম)</button>
+    <button class="danger small" id="clearGame">এই গেমের সব ফলাফল মুছুন</button>
+  </div>
+  <ul id="history" class="hist"></ul>
+  <div class="row" style="margin-top:10px"><button class="secondary hidden" id="moreHist" data-act="more-history">আরও দেখান</button></div>
+</section>
+
+<section class="panel">
+  <h2>৮. বাংলা ভয়েস সহায়তা</h2>
+  <div class="row"><button id="askVoice">🎙️ ভয়েসে প্রশ্ন করুন</button><button class="secondary" id="speakResult">🔊 বিশ্লেষণ শুনুন</button></div>
+  <p id="voiceStatus" class="muted status" aria-live="polite">সমর্থিত Chrome, মাইক্রোফোন অনুমতি ও ইন্টারনেট প্রয়োজন হতে পারে। ভয়েস প্রশ্ন বোঝে না—শুধু বর্তমান স্কোর পড়ে শোনায়।</p>
+</section>
+
+<section class="panel">
+  <h2>৯. স্ক্রিনশট OCR (পরীক্ষামূলক)</h2>
+  <p class="muted">OCR লেখা পড়ে সম্ভাব্য রং বেছে দেবে। যোগ করার আগে স্ক্রিনশট দেখে নিজে যাচাই করুন। ফলাফল সক্রিয় গেমে যোগ হবে। OCR লাইব্রেরি শুধু এই বাটন চাপলে ইন্টারনেট থেকে লোড হয়।</p>
+  <div class="row"><input id="screenShot" type="file" accept="image/*"><button id="readShot">স্ক্রিনশট পড়ুন</button></div>
+  <div id="shotStatus" class="muted status" aria-live="polite"></div>
+  <img id="shotPreview" alt="নির্বাচিত স্ক্রিনশট" class="hidden" style="max-width:100%;max-height:260px;margin-top:10px;border-radius:10px">
+  <div id="ocrText" class="muted" style="white-space:pre-wrap;margin-top:8px"></div>
+  <div class="row" style="margin-top:9px">
+    <select id="detectedColor" aria-label="যাচাই করা রং"><option value="">— রং বেছে নিন —</option><option>Red</option><option>Green</option><option>Violet</option><option>Other</option></select>
+    <button id="addDetected" disabled>যাচাই করা রেজাল্ট যোগ করুন</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>১০. ব্যাকআপ, Import ও ডেটা রক্ষা</h2>
+  <div class="row">
+    <button class="secondary" id="backup">JSON ব্যাকআপ</button>
+    <button class="secondary" id="csvAll">CSV (সব গেম)</button>
+    <button class="secondary" id="importBtn">Import (JSON / CSV)</button>
+    <input id="importFile" type="file" accept=".json,.csv,.txt,application/json,text/csv,text/plain" class="hidden">
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button class="secondary" id="scanLegacy">পুরোনো ডেটা খুঁজুন (V4 / V5 / অন্য)</button>
+    <button class="secondary hidden" id="dlQuarantine">যাচাই-না-হওয়া রেকর্ড ডাউনলোড</button>
+  </div>
+  <p class="muted">ডেটা এই ব্রাউজারের Local Storage-এ থাকে। ব্রাউজারের ডেটা মুছলে বা ফাইলটি ভিন্ন জায়গা/ঠিকানা থেকে খুললে আগের ডেটা না-ও দেখা যেতে পারে; নিয়মিত JSON ব্যাকআপ রাখুন। V6 পুরোনো V4/V5 স্টোরেজ কখনও পরিবর্তন বা মোছে না।</p>
+  <details id="trashBox">
+    <summary>ট্র্যাশ — মুছে ফেলা ফলাফল ফেরানো (<span id="trashCount">0</span>)</summary>
+    <div id="trashList"></div>
+  </details>
+  <details>
+    <summary>বিপজ্জনক অংশ</summary>
+    <p class="muted">সব গেমের সব ফলাফল মুছবে। মোছার আগে স্বয়ংক্রিয়ভাবে JSON ব্যাকআপ ডাউনলোড হবে এবং ডেটা ট্র্যাশে থাকবে।</p>
+    <button class="danger" id="clearAll">সব ডেটা মুছুন</button>
+  </details>
+</section>
+
+<section class="panel">
+  <div class="notice warn">গুরুত্বপূর্ণ: এই অ্যাপের শতাংশ ও স্কোর অতীত ডেটার পরিসংখ্যানভিত্তিক অনুমান—পরের রাউন্ডের প্রকৃত সম্ভাবনা বা নিশ্চিত ফল নয়। ফলাফল স্বাধীনভাবে random হলে আগের ফল দেখে পরের রং নির্ভরযোগ্যভাবে বলা যায় না। কোনো নিশ্চিত prediction বা লাভের দাবি করা হচ্ছে না।</div>
+</section>
+</main>
+
+<div id="modal" class="hidden" role="dialog" aria-modal="true" aria-label="Import যাচাই">
+  <div class="sheet" id="modalBody"></div>
+</div>
+
+<script>
+'use strict';
+/* ====================== Constants & helpers ====================== */
+const KEY='colour-analyzer-v6';
+const LEGACY_KEYS=['colour-analyzer-v5','colour-analyzer-v4','colour-analyzer-v3','colour-analyzer-v2','colour-analyzer-v1'];
+const COLORS=['Red','Green','Violet','Other'], MAIN=['Red','Green','Violet'], ALL='__all__', FIXED_GAME='91 Club WinGo 1 Minute';
+const KNOWN_FIELDS=['id','game','gameName','period','periodId','round','color','colour','result','at','time','date','createdAt','source','extra','number','ballNumber'];
+const $=id=>document.getElementById(id);
+const LS=(()=>{try{const t='__colour_probe__';localStorage.setItem(t,'1');localStorage.removeItem(t);return localStorage}catch(e){return null}})();
+
+let state={records:[],games:[],activeGame:'',settings:{requirePeriod:false},trash:[],quarantine:[],meta:{}};
+const ui={editingId:null,histLimit:30,histOrder:'new',lastAdd:null,storageError:false,pendingImport:null,corruptKey:null,loadNotes:[],scan:null};
+
+function uid(){return (globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')?globalThis.crypto.randomUUID():('r'+Date.now().toString(36)+Math.random().toString(36).slice(2))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function cleanName(s){return String(s??'').trim().slice(0,80)}
+function gameKey(n){return String(n??'').trim().replace(/\s+/g,' ').toLocaleLowerCase()}
+function normColour(v){
+  if(typeof v!=='string')return null;
+  const s=v.trim().toLowerCase();
+  if(s==='red'||s==='r')return'Red';
+  if(s==='green'||s==='g')return'Green';
+  if(s==='violet'||s==='v'||s==='purple')return'Violet';
+  if(s==='other'||s==='o')return'Other';
+  return null;
+}
+function toISO(v){
+  if(v===undefined||v===null||v==='')return'';
+  const d=typeof v==='number'?new Date(v):new Date(String(v));
+  return Number.isFinite(d.getTime())?d.toISOString():'';
+}
+function fmtTime(at){
+  if(!at)return'সময় অজানা';
+  try{return new Date(at).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})}catch(e){return at}
+}
+function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`}
+
+/* Validate one raw record. Returns {rec} or {error}. Never throws. */
+function parseRecord(raw){
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return{error:'রেকর্ডটি অবজেক্ট নয়'};
+  const cRaw=raw.color??raw.colour??raw.result;
+  const color=normColour(typeof cRaw==='number'?String(cRaw):cRaw);
+  if(!color)return{error:'অচেনা বা খালি রং: '+JSON.stringify(cRaw)};
+  const gameRaw=raw.game??raw.gameName;
+  if(gameRaw!==undefined&&gameRaw!==null&&typeof gameRaw!=='string'&&typeof gameRaw!=='number')return{error:'গেমের নাম পাঠযোগ্য নয়'};
+  const game=FIXED_GAME;
+  const numRaw=raw.number??raw.ballNumber??raw.ball_no??raw.value;
+  const number=(numRaw===undefined||numRaw===null||String(numRaw).trim()==='')?null:Number(numRaw);
+  if(number!==null&&(!Number.isInteger(number)||number<0||number>100))return{error:'বল নম্বর ০ থেকে ১০০-এর পূর্ণসংখ্যা হতে হবে'};
+  const period=String(raw.period??raw.periodId??raw.round??'').trim().slice(0,100);
+  const at=toISO(raw.at??raw.time??raw.date??raw.createdAt);
+  const rec={id:(typeof raw.id==='string'&&raw.id)?raw.id:uid(),game,period,color,number,at,source:String(raw.source||'manual').slice(0,40)};
+  const extra={};let n=0;
+  if(raw.extra&&typeof raw.extra==='object'&&!Array.isArray(raw.extra)){for(const k of Object.keys(raw.extra)){const v=raw.extra[k];if(['string','number','boolean'].includes(typeof v)&&n<20){extra[k]=v;n++}}}
+  for(const k of Object.keys(raw)){if(KNOWN_FIELDS.includes(k))continue;const v=raw[k];if(['string','number','boolean'].includes(typeof v)&&n<20){extra[k]=v;n++}}
+  if(n)rec.extra=extra;
+  return{rec};
+}
+function ingest(list){
+  const good=[],bad=[];
+  list.forEach((raw,i)=>{const r=parseRecord(raw);if(r.rec)good.push(r.rec);else bad.push({index:i+1,error:r.error,raw})});
+  return{good,bad};
+}
+function ensureUniqueIds(list){const seen=new Set();list.forEach(r=>{if(seen.has(r.id))r.id=uid();seen.add(r.id)})}
+
+/* ====================== Games ====================== */
+function gameGroups(){
+  const m=new Map();
+  const get=(name)=>{const k=gameKey(name);if(!k)return null;let g=m.get(k);if(!g){g={key:k,name:cleanName(name),count:0,reg:false,spell:new Map()};m.set(k,g)}return g};
+  state.games.forEach(n=>{const g=get(n);if(g&&!g.reg){g.reg=true;g.name=cleanName(n)}});
+  state.records.forEach(r=>{const g=get(r.game);if(g){g.count++;g.spell.set(r.game,(g.spell.get(r.game)||0)+1)}});
+  m.forEach(g=>{if(!g.reg&&g.spell.size>1){let best=0;g.spell.forEach((c,n)=>{if(c>best){best=c;g.name=cleanName(n)}})}});
+  return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+function currentView(){
+  const groups=gameGroups();
+  let key=state.activeGame;
+  if(key!==ALL&&!groups.some(g=>g.key===key))key=groups.length?groups[0].key:'';
+  state.activeGame=key;
+  if(key&&key!==ALL)ui.lastGame=key;   // the read-only all-games view is never the startup view
+  if(key===ALL)return{all:true,key,name:'সব গেম',groups,group:null,data:state.records.slice()};
+  const group=groups.find(g=>g.key===key)||null;
+  return{all:false,key,name:group?group.name:'',groups,group,data:group?state.records.filter(r=>gameKey(r.game)===key):[]};
+}
+function recordsOfGame(key){return state.records.filter(r=>gameKey(r.game)===key)}
+/* Keep chronological order inside one game when every record has a real timestamp. */
+function reorderGame(key){
+  const idx=[];state.records.forEach((r,i)=>{if(gameKey(r.game)===key)idx.push(i)});
+  const list=idx.map(i=>state.records[i]);
+  if(list.length<2||!list.every(r=>r.at))return;
+  const sorted=list.map((r,i)=>({r,i})).sort((a,b)=>(Date.parse(a.r.at)-Date.parse(b.r.at))||(a.i-b.i)).map(x=>x.r);
+  idx.forEach((gi,j)=>{state.records[gi]=sorted[j]});
+}
+
+/* ====================== Prediction & analysis (pure functions) ====================== */
+const WEIGHTS={frequency:0.35,recent:0.40,transition:0.25};
+function predictionScores(data){
+  const usable=data.filter(r=>MAIN.includes(r.color));
+  const n=usable.length, recent=usable.slice(-10);
+  const counts={Red:0,Green:0,Violet:0}, recentCounts={Red:0,Green:0,Violet:0}, trans={Red:0,Green:0,Violet:0};
+  usable.forEach(r=>counts[r.color]++);
+  recent.forEach(r=>recentCounts[r.color]++);
+  const lastRec=data.length?data[data.length-1]:null;
+  const last=lastRec&&MAIN.includes(lastRec.color)?lastRec.color:null; // latest result "Other" => no transition evidence
+  let transTotal=0;
+  if(last){for(let i=1;i<data.length;i++){if(data[i-1].color===last&&MAIN.includes(data[i].color)){trans[data[i].color]++;transTotal++}}}
+  const raw=MAIN.map(name=>{
+    const frequency=(counts[name]+1)/(n+3);
+    const recentRate=(recentCounts[name]+1)/(recent.length+3);
+    const transitionRate=transTotal?(trans[name]+1)/(transTotal+3):frequency;
+    return{name,count:counts[name],
+      rawScore:WEIGHTS.frequency*frequency+WEIGHTS.recent*recentRate+WEIGHTS.transition*transitionRate,
+      frequency:n?100*counts[name]/n:0,
+      recent:recent.length?100*recentCounts[name]/recent.length:0,
+      transition:transTotal?100*trans[name]/transTotal:null};
+  });
+  const sum=raw.reduce((a,r)=>a+r.rawScore,0);
+  const exact=raw.map(r=>10000*r.rawScore/sum);               // hundredths of a percent
+  const floors=exact.map(Math.floor);
+  let rem=10000-floors.reduce((a,b)=>a+b,0);
+  exact.map((e,i)=>({i,f:e-floors[i]})).sort((a,b)=>(b.f-a.f)||(a.i-b.i)).forEach(o=>{if(rem>0){floors[o.i]++;rem--}});
+  const rows=raw.map((r,i)=>({...r,exact:exact[i]/100,hund:floors[i],score:floors[i]/100}));
+  const maxExact=Math.max(...rows.map(r=>r.exact));
+  const winners=n===0?[]:rows.filter(r=>maxExact-r.exact<1e-6).map(r=>r.name);
+  const sortedExact=rows.map(r=>r.exact).sort((a,b)=>b-a);
+  const gap=sortedExact[0]-sortedExact[1];
+  const otherCount=data.length-n;
+  return{usable:n,otherCount,rows,winners,tie:winners.length>1,gap,low:n>0&&gap<5,small:n>0&&n<30,
+    totalHund:floors.reduce((a,b)=>a+b,0),lastColor:last};
+}
+function pickUnique(counts){const mx=Math.max(...MAIN.map(c=>counts[c]));const w=MAIN.filter(c=>counts[c]===mx);return mx>0&&w.length===1?w[0]:null}
+function countColours(list){const c={Red:0,Green:0,Violet:0};list.forEach(r=>{if(c[r.color]!==undefined)c[r.color]++});return c}
+const MODEL_NAMES=['শেষ ১০টির Majority','সব আগের ফলের Majority','Transition Majority','সর্বশেষ রং (Persistence)','Combined Model Score (এই অ্যাপের স্কোর)'];
+/* Walk-forward: every target uses ONLY earlier records of the same game. Capped to the latest 1000 targets for speed. */
+function evaluateModels(data){
+  const n=data.length,start=Math.max(10,n-1000);
+  const st=MODEL_NAMES.map(name=>({name,hits:0,pred:0}));
+  let eligible=0;
+  for(let i=start;i<n;i++){
+    const target=data[i].color;if(!MAIN.includes(target))continue;
+    eligible++;
+    const prior=data.slice(0,i),usable=prior.filter(r=>MAIN.includes(r.color));
+    const p1=pickUnique(countColours(usable.slice(-10))),p2=pickUnique(countColours(usable));
+    const lastRec=prior[prior.length-1],last=MAIN.includes(lastRec.color)?lastRec.color:null;
+    let p3=null;
+    if(last){const tc={Red:0,Green:0,Violet:0};for(let j=1;j<prior.length;j++){if(prior[j-1].color===last&&MAIN.includes(prior[j].color))tc[prior[j].color]++}p3=pickUnique(tc)}
+    const sc=predictionScores(prior),p5=(sc.usable>0&&sc.winners.length===1)?sc.winners[0]:null;
+    [p1,p2,p3,last,p5].forEach((p,j)=>{if(p){st[j].pred++;if(p===target)st[j].hits++}});
+  }
+  return{eligible,stats:st,capped:n-10>1000,totalSteps:Math.max(0,n-10)};
+}
+function transitionMatrix(data){
+  const m={Red:{Red:0,Green:0,Violet:0},Green:{Red:0,Green:0,Violet:0},Violet:{Red:0,Green:0,Violet:0}};
+  for(let i=1;i<data.length;i++){const a=data[i-1].color,b=data[i].color;if(m[a]&&m[a][b]!==undefined)m[a][b]++}
+  return m;
+}
+function streakInfo(data){
+  if(!data.length)return null;
+  let run=1;for(let i=data.length-1;i>0&&data[i].color===data[i-1].color;i--)run++;
+  const longest={Red:0,Green:0,Violet:0,Other:0};let cur=0;
+  data.forEach((r,i)=>{cur=(i>0&&data[i-1].color===r.color)?cur+1:1;if(cur>longest[r.color])longest[r.color]=cur});
+  return{color:data[data.length-1].color,run,longest};
+}
+
+/* ====================== Storage ====================== */
+function serialize(){return{app:'Colour Prediction Analyzer',version:6,savedAt:new Date().toISOString(),records:state.records,games:state.games,activeGame:state.activeGame===ALL?(ui.lastGame||''):state.activeGame,settings:state.settings,trash:state.trash,quarantine:state.quarantine,meta:state.meta}}
+function persist(){
+  if(!LS){ui.storageError='nostorage';return false}
+  try{LS.setItem(KEY,JSON.stringify(serialize()));ui.storageError=false;return true}
+  catch(e){ui.storageError='quota';return false}
+}
+function commit(msg,opts){const ok=persist();render();setStatus(ok?msg:'⚠ সেভ করা যায়নি — এখনই JSON ব্যাকআপ নিন।',opts);return ok}
+function setStatus(msg,opts){
+  const el=$('saved');
+  el.innerHTML=esc(msg||'')+((opts&&opts.undoId)?` <button class="secondary small" data-act="undo" data-id="${esc(opts.undoId)}">↩ ফেরান</button>`:'');
+}
+function setError(msg){const el=$('entryError');el.textContent=msg||'';el.classList.toggle('hidden',!msg)}
+
+function extractArray(obj){
+  if(Array.isArray(obj))return obj;
+  if(obj&&typeof obj==='object')for(const k of['records','data','results','history','items'])if(Array.isArray(obj[k]))return obj[k];
+  return null;
+}
+function readLegacyKey(key){
+  let raw;try{raw=LS.getItem(key)}catch(e){return null}
+  if(raw===null)return null;
+  try{
+    const arr=extractArray(JSON.parse(raw));
+    if(!arr)return{key,error:'ডেটা তালিকা আকারে নেই'};
+    const list=/-v1$/.test(key)?arr.slice().reverse():arr;      // V1 stored newest-first
+    const r=ingest(list);
+    return{key,total:arr.length,good:r.good,bad:r.bad};
+  }catch(e){return{key,error:'JSON পড়া যায়নি'}}
+}
+function loadState(){
+  if(!LS)return;
+  let raw=null;
+  try{raw=LS.getItem(KEY)}catch(e){}
+  if(raw!==null){
+    try{
+      const obj=JSON.parse(raw);
+      const arr=extractArray(obj);
+      if(!arr)throw new Error('shape');
+      const r=ingest(arr);
+      state.records=r.good;ensureUniqueIds(state.records);
+      state.games=Array.isArray(obj.games)?obj.games.filter(x=>typeof x==='string').map(cleanName).filter(Boolean):[];
+      state.activeGame=typeof obj.activeGame==='string'?obj.activeGame:'';
+      state.settings={requirePeriod:!!(obj.settings&&obj.settings.requirePeriod)};
+      state.trash=Array.isArray(obj.trash)?obj.trash.filter(t=>t&&Array.isArray(t.records)):[];
+      state.quarantine=Array.isArray(obj.quarantine)?obj.quarantine:[];
+      state.meta=(obj.meta&&typeof obj.meta==='object')?obj.meta:{};
+      if(r.bad.length){addQuarantine(r.bad,'v6-load');ui.loadNotes.push(`V6 ডেটার ${r.bad.length}টি রেকর্ড যাচাই হয়নি; সেগুলো কোয়ারেন্টিনে রাখা হয়েছে।`);persist()}
+    }catch(e){
+      // Never overwrite unreadable data: keep a verbatim copy under a separate key and start empty (nothing is written until the user acts).
+      const ck=KEY+'-corrupt-'+Date.now();
+      try{LS.setItem(ck,raw);ui.corruptKey=ck}catch(e2){ui.corruptKey='unsaved'}
+      ui.corruptRaw=raw;
+      ui.loadNotes.push('V6 সেভ-করা ডেটা পড়া যায়নি। মূল লেখা অক্ষত রাখা হয়েছে।');
+      state.meta.blockedByCorrupt=true;
+    }
+    return;
+  }
+  // First run of V6: bring data in from V5 / V4 / older WITHOUT touching those keys.
+  const found=LEGACY_KEYS.map(readLegacyKey).filter(Boolean);
+  const errs=found.filter(f=>f.error).map(f=>`${f.key}: ${f.error}`);
+  const primary=found.find(f=>f.good&&f.good.length>0);
+  if(errs.length)ui.loadNotes.push('পুরোনো ডেটা পড়তে সমস্যা — '+errs.join('; ')+'। সংশ্লিষ্ট মূল ডেটা অক্ষত আছে।');
+  if(!primary)return;
+  state.records=primary.good;ensureUniqueIds(state.records);
+  if(primary.bad.length)addQuarantine(primary.bad,primary.key);
+  state.meta.migration={from:primary.key,imported:primary.good.length,rejected:primary.bad.length,
+    others:found.filter(f=>f!==primary&&f.good&&f.good.length).map(f=>({key:f.key,count:f.good.length})),at:new Date().toISOString(),ack:false};
+  persist();
+}
+function addQuarantine(bad,source){
+  bad.forEach(b=>{if(state.quarantine.length<500)state.quarantine.push({source,index:b.index,error:b.error,raw:b.raw,at:new Date().toISOString()})});
+}
+
+/* ====================== Export / download ====================== */
+function download(name,data,type){
+  const u=URL.createObjectURL(new Blob([data],{type}));
+  const a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{a.remove();URL.revokeObjectURL(u)},2000);
+}
+function exportRecord(r){const o={id:r.id,game:FIXED_GAME,period:r.period,color:r.color,number:r.number??null,source:r.source};if(r.at)o.at=r.at;if(r.extra)o.extra=r.extra;return o}
+function downloadBackup(){
+  const names=gameGroups().map(g=>g.name);
+  download(`colour-analyzer-backup-${stamp()}.json`,JSON.stringify({app:'Colour Prediction Analyzer',version:6,exportedAt:new Date().toISOString(),games:names,settings:state.settings,records:state.records.map(exportRecord),quarantine:state.quarantine},null,2),'application/json');
+}
+function toCSV(rows){return rows.map(row=>row.map(v=>{let x=String(v??'');if(/^[=+@\-\t\r]/.test(x))x="'"+x;return'"'+x.replace(/"/g,'""')+'"'}).join(',')).join('\r\n')}
+function downloadCSV(list,label){
+  const rows=[['id','game','period','color','number','time','source'],...list.map(r=>[r.id,FIXED_GAME,r.period,r.color,r.number??'',r.at,r.source])];
+  download(`colour-results-${label}-${stamp()}.csv`,'\ufeff'+toCSV(rows),'text/csv;charset=utf-8');
+}
+function parseCSV(text,delim){
+  text=text.replace(/^\uFEFF/,'');
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"')q=true;
+    else if(c===delim){row.push(cur);cur=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur='';rows.push(row);row=[]}
+    else cur+=c;
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row)}
+  return rows.filter(r=>r.some(c=>c.trim()!==''));
+}
+function csvToObjects(text){
+  const first=text.split(/\r?\n/)[0]||'';
+  const delim=((first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length)?';':',';
+  const rows=parseCSV(text,delim);
+  if(!rows.length)return[];
+  const unguard=v=>String(v??'').replace(/^'(?=[=+@\-\t\r])/,'');
+  const h=rows[0].map(x=>x.trim().toLowerCase());
+  const hasHeader=h.some(x=>['color','colour','result','game','period','periodid','round'].includes(x));
+  const names=hasHeader?h:['id','game','period','color','time','source'];
+  return(hasHeader?rows.slice(1):rows).map(r=>{const o={};names.forEach((nm,i)=>{if(nm&&r[i]!==undefined)o[nm==='periodid'?'period':nm==='round'?'period':nm]=unguard(r[i])});return o});
+}
+
+/* ====================== Merge / import ====================== */
+function fingerprint(r){return[gameKey(r.game),r.period.trim().toLocaleLowerCase(),r.color,r.at].join('|')}
+function periodKey(r){return r.period.trim()?gameKey(r.game)+'|'+r.period.trim().toLocaleLowerCase():''}
+function mergeRecords(base,incoming){
+  const fp=new Set(base.map(fingerprint)),pk=new Map(),ids=new Set(base.map(r=>r.id));
+  base.forEach(r=>{const k=periodKey(r);if(k)pk.set(k,r.color)});
+  const added=[];let dup=0,conflict=0;
+  for(const r0 of incoming){
+    const r={...r0},k=periodKey(r);
+    if(k&&pk.has(k)){if(pk.get(k)===r.color)dup++;else conflict++;continue}
+    const f=fingerprint(r);if(fp.has(f)){dup++;continue}
+    if(ids.has(r.id))r.id=uid();
+    ids.add(r.id);fp.add(f);if(k)pk.set(k,r.color);added.push(r);
+  }
+  return{added,dup,conflict};
+}
+function openModal(html){$('modalBody').innerHTML=html;$('modal').classList.remove('hidden');document.body.classList.add('noscroll');$('modalBody').scrollTop=0}
+function closeModal(){$('modal').classList.add('hidden');document.body.classList.remove('noscroll');ui.pendingImport=null}
+function prepareImport(label,rawList,extraGames){
+  const {good,bad}=ingest(rawList);
+  const m=mergeRecords(state.records,good),rp=mergeRecords([],good);
+  const have=new Set(gameGroups().map(g=>g.key));
+  const newGames=[...new Set(good.map(r=>r.game))].filter(g=>!have.has(gameKey(g)));
+  ui.pendingImport={label,good,bad,extraGames:extraGames||[],merge:m,replace:rp};
+  const badList=bad.slice(0,5).map(b=>`<li>#${b.index}: ${esc(b.error)}</li>`).join('');
+  const nothing=good.length===0;
+  openModal(`<h2>Import যাচাই — ${esc(label)}</h2>
+    <p>ফাইলে মোট <b>${rawList.length}</b>টি রেকর্ড: বৈধ <b>${good.length}</b>, অবৈধ <b>${bad.length}</b>।</p>
+    ${bad.length?`<div class="notice warn">অবৈধ রেকর্ড ডেটা হারাবে না—কোয়ারেন্টিনে রাখা হবে। প্রথম কয়েকটি কারণ:<ul>${badList}</ul></div>`:''}
+    ${nothing?'<div class="notice err">কোনো বৈধ রেকর্ড নেই। বর্তমান ডেটায় কিছু বদলানো হয়নি।</div>':`
+    <p><b>মার্জ (প্রস্তাবিত):</b> নতুন ${m.added.length}টি যোগ হবে; ডুপ্লিকেট ${m.dup}টি বাদ; একই Period ID কিন্তু ভিন্ন রং (বিরোধ) ${m.conflict}টি — বিদ্যমানটি থাকবে।${newGames.length?`<br>নতুন গেম: ${esc(newGames.join(', '))}`:''}</p>
+    <p><b>সব প্রতিস্থাপন:</b> বর্তমান ${state.records.length}টি রেকর্ড ট্র্যাশে যাবে, ফাইলের ${rp.added.length}টি থাকবে (ফাইলের ভিতরের ডুপ্লিকেট ${rp.dup+rp.conflict}টি বাদ)।</p>
+    <label class="check"><input type="checkbox" id="impBackup" checked> <span>আগে বর্তমান ডেটার JSON ব্যাকআপ ডাউনলোড করুন</span></label>`}
+    <div class="row" style="margin-top:12px">
+      ${nothing?'':'<button data-act="imp-merge">মার্জ করুন</button><button class="danger" data-act="imp-replace">সব প্রতিস্থাপন</button>'}
+      <button class="secondary" data-act="imp-cancel">বাতিল</button>
+    </div>`);
+}
+function applyImport(mode){
+  const p=ui.pendingImport;if(!p)return;
+  const wantBackup=$('impBackup')&&$('impBackup').checked;
+  if(mode==='replace'&&!confirm(`বর্তমান ${state.records.length}টি রেকর্ড ট্র্যাশে সরিয়ে ফাইলের ডেটা বসানো হবে। নিশ্চিত?`))return;
+  if(wantBackup)downloadBackup();
+  let msg;
+  if(mode==='merge'){
+    const m=p.merge;
+    const keys=new Set(m.added.map(r=>gameKey(r.game)));
+    // adopt existing spelling of a game when it already exists
+    const groups=gameGroups();
+    m.added.forEach(r=>{const g=groups.find(x=>x.key===gameKey(r.game));if(g)r.game=g.name});
+    state.records.push(...m.added);
+    p.extraGames.forEach(n=>{if(!gameGroups().some(g=>g.key===gameKey(n)))state.games.push(cleanName(n))});
+    keys.forEach(reorderGame);
+    msg=`${m.added.length}টি নতুন যোগ হয়েছে, ${m.dup}টি ডুপ্লিকেট ও ${m.conflict}টি বিরোধপূর্ণ রেকর্ড বাদ গেছে।`;
+  }else{
+    if(state.records.length)trashPush('import-replace',state.records.slice());
+    state.records=p.replace.added.slice();
+    state.games=p.extraGames.map(cleanName).filter(Boolean);
+    state.activeGame='';ui.editingId=null;resetEntryForm();
+    new Set(state.records.map(r=>gameKey(r.game))).forEach(reorderGame);
+    msg=`ডেটা প্রতিস্থাপিত হয়েছে (${state.records.length}টি রেকর্ড)। আগের ডেটা ট্র্যাশে আছে।`;
+  }
+  ensureUniqueIds(state.records);
+  addQuarantine(p.bad,p.label);
+  closeModal();
+  commit(msg);
+}
+
+/* ====================== Trash ====================== */
+function trashPush(reason,records,idx){
+  const id=uid();
+  state.trash.unshift({id,at:new Date().toISOString(),reason,records:records.map(r=>({...r})),idx:idx||null});
+  if(state.trash.length>15)state.trash.length=15;
+  return id;
+}
+function trashRestore(id){
+  const b=state.trash.find(t=>t.id===id);if(!b)return null;
+  const {good}=ingest(b.records);
+  const m=mergeRecords(state.records,good);
+  const keys=new Set();
+  m.added.forEach((r,i)=>{
+    keys.add(gameKey(r.game));
+    const pos=b.idx&&Number.isInteger(b.idx[i])?Math.min(b.idx[i],state.records.length):state.records.length;
+    state.records.splice(pos,0,r);
+  });
+  keys.forEach(reorderGame);
+  state.trash=state.trash.filter(t=>t.id!==id);
+  return m;
+}
+
+/* ====================== Entry actions ====================== */
+function resetEntryForm(){ui.editingId=null;$('period').value='';$('add').textContent='ফলাফল যোগ করুন';$('cancelEdit').classList.add('hidden');setError('')}
+function periodConflict(key,period,ignoreId){
+  const p=period.trim().toLocaleLowerCase();if(!p)return null;
+  return state.records.find(r=>r.id!==ignoreId&&gameKey(r.game)===key&&r.period.trim().toLocaleLowerCase()===p)||null;
+}
+function validateEntry(view,color,ignoreId){
+  const rawNum=$('ballNumber').value.trim(), num=rawNum===''?null:Number(rawNum);
+  if(num===null||!Number.isInteger(num)||num<0||num>100)return'বল নম্বর ০ থেকে ১০০-এর মধ্যে পূর্ণসংখ্যা লিখুন।';
+  if(view.all||!view.group)return'প্রথমে একটি গেম বেছে নিন বা নতুন গেম যোগ করুন।';
+  if(!COLORS.includes(color))return'একটি রং (Red / Green / Violet / Other) বেছে নিন।';
+  const period=$('period').value.trim();
+  if(period.length>100)return'Period ID সর্বোচ্চ ১০০ অক্ষরের হতে পারে।';
+  if(state.settings.requirePeriod&&!period)return'Period ID বাধ্যতামূলক করা আছে—Period ID লিখুন।';
+  const c=periodConflict(view.key,period,ignoreId);
+  if(c)return`এই গেমে Period ID "${period}" আগে থেকেই আছে (${c.color})। ডুপ্লিকেট যোগ করা হয়নি।`;
+  return'';
+}
+function addResult(color,source){
+  setError('');
+  if(ui.editingId){setError('এখন Edit মোড চালু। আগে পরিবর্তন সেভ করুন বা Edit বাতিল করুন।');return false}
+  const view=currentView(),err=validateEntry(view,color,null);
+  if(err){setError(err);return false}
+  const period=$('period').value.trim();
+  const now=Date.now();
+  if(!period&&ui.lastAdd&&ui.lastAdd.key===view.key&&ui.lastAdd.color===color&&now-ui.lastAdd.t<1200){
+    setError('একই ফলাফল খুব দ্রুত দুবার চাপা হয়েছে—ডুপ্লিকেট ঠেকাতে দ্বিতীয়টি বাদ দেওয়া হয়েছে।');return false}
+  if(!state.games.some(n=>gameKey(n)===view.key))state.games.push(view.name);
+  state.records.push({id:uid(),game:FIXED_GAME,period,color,number:Number($('ballNumber').value),at:new Date().toISOString(),source:source||'manual'});
+  ui.lastAdd={key:view.key,color,t:now};
+  $('period').value='';$('ballNumber').value='';
+  commit(`${color} ফলাফল "${view.name}"-এ যোগ হয়েছে; স্কোর নতুন করে হিসাব হয়েছে।`);
+  return true;
+}
+function saveEdit(){
+  setError('');
+  const i=state.records.findIndex(r=>r.id===ui.editingId);
+  if(i<0){resetEntryForm();render();return}
+  const color=$('color').value,view=currentView(),err=validateEntry(view,color,ui.editingId);
+  if(err){setError(err);return}
+  state.records[i]={...state.records[i],color,number:Number($('ballNumber').value),period:$('period').value.trim()};
+  resetEntryForm();
+  commit('পরিবর্তন সেভ হয়েছে; স্কোর পুনর্গণনা হয়েছে।');
+}
+function startEdit(id){
+  const r=state.records.find(x=>x.id===id);if(!r)return;
+  state.activeGame=gameKey(r.game);
+  $('period').value=r.period;$('color').value=r.color;$('ballNumber').value=r.number??'';
+  ui.editingId=id;setError('');
+  $('add').textContent='পরিবর্তন সেভ করুন';$('cancelEdit').classList.remove('hidden');
+  render();setStatus('Edit মোড: রং ও Period ID বদলাতে পারবেন (গেম বদলানো যায় না)।');
+  $('entryPanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function deleteRecord(id){
+  const idx=state.records.findIndex(x=>x.id===id);if(idx<0)return;
+  const r=state.records[idx],seq=recordsOfGame(gameKey(r.game)).findIndex(x=>x.id===id)+1;
+  if(!confirm(`"${r.game}" #${seq} (${r.color}) মুছবেন? ট্র্যাশে রাখা হবে—পরে ফেরানো যাবে।`))return;
+  const tid=trashPush('delete',[r],[idx]);
+  state.records.splice(idx,1);
+  if(ui.editingId===id)resetEntryForm();
+  commit(`${r.color} ফলাফল মুছে ট্র্যাশে রাখা হয়েছে।`,{undoId:tid});
+}
+
+/* ====================== Rendering ====================== */
+function rangeData(view){const n=$('range').value;return n==='all'?view.data:view.data.slice(-Number(n))}
+function banner(cls,html){return`<div class="notice ${cls}">${html}</div>`}
+function renderBanners(){
+  let h='';
+  if(!LS)h+=banner('err','<b>⚠ এই জায়গা থেকে ডেটা সেভ করা যাচ্ছে না।</b> Chrome এই ফাইলের জন্য Local Storage বন্ধ রেখেছে (যেমন কিছু ফাইল-ম্যানেজার থেকে খুললে হয়)। অ্যাপ চলবে, কিন্তু পেজ বন্ধ করলে ডেটা যাবে। এখনই JSON ব্যাকআপ নিন, বা ফাইলটি Chrome-এর file:// ঠিকানা দিয়ে খুলুন।<div class="row"><button class="secondary small" data-act="download-backup">JSON ব্যাকআপ</button></div>');
+  if(ui.storageError==='quota')h+=banner('err','<b>⚠ সেভ ব্যর্থ।</b> স্টোরেজ পূর্ণ বা বন্ধ। নতুন ডেটা এখন শুধু মেমরিতে আছে—এখনই JSON ব্যাকআপ নিন।<div class="row"><button class="secondary small" data-act="download-backup">JSON ব্যাকআপ</button></div>');
+  if(ui.corruptKey)h+=banner('err',`<b>⚠ V6 সেভ-করা ডেটা পড়া যায়নি।</b> মূল লেখাটি অক্ষত রাখা হয়েছে${ui.corruptKey!=='unsaved'?' (আলাদা কী-তে কপি)':''}। নতুন কিছু যোগ করলে নতুন V6 ডেটা শুরু হবে—তার আগে নিচের বাটনে মূল লেখা ডাউনলোড করে রাখুন।<div class="row"><button class="secondary small" data-act="dl-corrupt">মূল লেখা ডাউনলোড</button><button class="secondary small" data-act="scan-legacy">ডেটা খুঁজুন</button></div>`);
+  const mg=state.meta.migration;
+  if(mg&&!mg.ack){
+    const label={'colour-analyzer-v5':'V5','colour-analyzer-v4':'V4','colour-analyzer-v3':'V3','colour-analyzer-v2':'V2','colour-analyzer-v1':'V1'}[mg.from]||mg.from;
+    h+=banner('ok',`<b>পুরোনো ডেটা আনা হয়েছে:</b> ${label} থেকে ${mg.imported}টি রেকর্ড V6-এ কপি হয়েছে${mg.rejected?`, ${mg.rejected}টি যাচাই হয়নি (কোয়ারেন্টিনে সংরক্ষিত)`:''}। পুরোনো ডেটা অপরিবর্তিত আছে।${mg.others&&mg.others.length?`<br>অন্য পুরোনো সংস্করণেও ডেটা পাওয়া গেছে (${mg.others.map(o=>o.key.replace('colour-analyzer-','').toUpperCase()+': '+o.count).join(', ')}) — স্বয়ংক্রিয় মার্জ করা হয়নি ডুপ্লিকেট এড়াতে; দরকার হলে "পুরোনো ডেটা খুঁজুন" ব্যবহার করুন।`:''}<div class="row"><button class="secondary small" data-act="download-backup">JSON ব্যাকআপ ডাউনলোড</button><button class="secondary small" data-act="scan-legacy">পুরোনো ডেটা খুঁজুন</button><button class="secondary small" data-act="ack-migration">বুঝেছি</button></div>`);
+  }
+  if(ui.loadNotes.length)h+=banner('warn',ui.loadNotes.map(esc).join('<br>')+'<div class="row"><button class="secondary small" data-act="dismiss-notes">বুঝেছি</button></div>');
+  $('banners').innerHTML=h;
+}
+function renderGameSelect(view){
+  const sel=$('gameSelect');
+  if(!view.groups.length){sel.innerHTML='<option value="">— কোনো গেম নেই; নিচে নতুন গেম যোগ করুন —</option>';sel.disabled=true}
+  else{
+    sel.disabled=false;
+    sel.innerHTML=view.groups.map(g=>`<option value="${esc(g.key)}">${esc(g.name)} (${g.count})</option>`).join('')+`<option value="${ALL}">সব গেম — শুধু সারসংক্ষেপ</option>`;
+    sel.value=view.key;
+  }
+  $('gameHint').textContent=view.all?'সব-গেম ভিউ শুধু দেখার জন্য: এখানে prediction ও backtest বন্ধ, কারণ আলাদা গেমের ডেটা মিশিয়ে হিসাব করা ভুল। একটি গেম বেছে নিন।':(view.group?`প্রতিটি গেমের ইতিহাস, স্কোর ও backtest সম্পূর্ণ আলাদা। এই গেমে ${view.data.length}টি ফলাফল।`:'প্রথমে একটি গেমের নাম লিখে "গেম যোগ করুন" চাপুন।');
+}
+function renderEntry(view){
+  const editing=ui.editingId;
+  $('targetGame').innerHTML=view.group?`যোগ হবে: <b>${esc(view.name)}</b>${editing?' — <b>Edit মোড</b>':''}`:(view.all?'সব-গেম ভিউতে ফলাফল যোগ করা যায় না—একটি গেম বেছে নিন।':'আগে একটি গেম যোগ করুন।');
+  $('add').disabled=!view.group;
+  $('requirePeriod').checked=!!state.settings.requirePeriod;
+  $('period').placeholder=state.settings.requirePeriod?'Round / Period ID (বাধ্যতামূলক)':'Round / Period ID (ঐচ্ছিক—না দিলেও চলবে)';
+}
+function scoreCard(r,p,empty){
+  const cvar={Red:'--red',Green:'--green',Violet:'--violet'}[r.name];
+  const top=!empty&&p.winners.includes(r.name);
+  const cls=top?(p.tie?'score tie':'score top'):'score';
+  const tag=top?`<span class="tag">${p.tie?'সমান শীর্ষ':'★ সর্বোচ্চ'}</span>`:'';
+  const w=empty?0:Math.max(0,Math.min(100,r.score));
+  return`<div class="${cls}" style="--c:var(${cvar})">
+    <div class="score-head"><span><b>${r.name}</b>${tag}</span><span class="pct">${empty?'—':r.score.toFixed(2)+'%'}</span></div>
+    <div class="bar"><div class="fill" style="width:${w}%"></div></div>
+    ${empty?'':`<small>সব ইতিহাসের হার ${r.frequency.toFixed(1)}% · শেষ ১০টির হার ${r.recent.toFixed(1)}% · ${r.transition===null?'Transition ডেটা নেই':'Transition হার '+r.transition.toFixed(1)+'%'}</small>`}
+  </div>`;
+}
+function renderPrediction(view){
+  const box=$('forecast');
+  const explain=`<details><summary>স্কোর কীভাবে হিসাব হয়?</summary><p class="muted">স্কোর = ০.৩৫ × (এই গেমের সব Red/Green/Violet ফলের হার) + ০.৪০ × (শেষ ১০টি Red/Green/Violet ফলের হার) + ০.২৫ × (শেষ ফলের রঙের পর কোন রঙ এসেছে তার হার)। প্রতিটি হারে Laplace +১ স্মুথিং আছে যাতে কোনো রঙ ০% না হয়। তারপর তিনটি স্কোর মিলিয়ে ঠিক ১০০.০০% করা হয় (দশমিকের শেষ ০.০১ বড়-অবশিষ্টের নিয়মে বণ্টিত)। Other এই হিসাবে ধরা হয় না। এখানকার ওজন (০.৩৫/০.৪০/০.২৫) অ্যাপের নিজস্ব সরল নির্বাচন—এর পিছনে প্রমাণিত ভবিষ্যৎ-নির্ভুলতা নেই।</p></details>`;
+  if(view.all||!view.group){
+    const p=predictionScores([]);
+    box.innerHTML=`<div class="notice warn">${view.all?'সব-গেম ভিউতে স্কোর দেখানো হয় না—একটি নির্দিষ্ট গেম বেছে নিন।':'গেম যোগ করলে এখানে স্কোর দেখা যাবে।'}</div>`+p.rows.map(r=>scoreCard(r,p,true)).join('')+explain;return;
+  }
+  const p=predictionScores(view.data);
+  let decision,cls='ok';
+  if(p.usable===0){decision='কোনো Red/Green/Violet ফলাফল নেই — স্কোর প্রাথমিকভাবে সমান (প্রায় ৩৩.৩৩% করে)। ডেটা যোগ করুন।';cls='warn'}
+  else if(p.tie){decision=`⚠ LOW CONFIDENCE — ${p.winners.join(' ও ')} এর স্কোর হুবহু সমান; একক সর্বোচ্চ নেই।`;cls='warn'}
+  else if(p.low){decision=`⚠ LOW CONFIDENCE — শীর্ষ দুই রঙের পার্থক্য মাত্র ${p.gap.toFixed(2)} শতাংশ-পয়েন্ট (৫-এর কম)। সর্বোচ্চ স্কোর: ${p.winners[0]}।`;cls='warn'}
+  else decision=`সর্বোচ্চ স্কোর: ${p.winners[0]} (দ্বিতীয়টির চেয়ে ${p.gap.toFixed(2)} পয়েন্ট বেশি)। এটি অতীত ডেটার পরিসংখ্যান-অনুমান, নিশ্চিত ফল নয়।`;
+  const extra=[];
+  if(p.small)extra.push(`নমুনা মাত্র ${p.usable}টি (৩০-এর কম) — স্কোর অস্থির, অর্থবহ নয়।`);
+  if(p.otherCount)extra.push(`Other ${p.otherCount}টি আলাদা—তিন রঙের ১০০%-এ ধরা হয়নি।`);
+  if(p.usable>0&&p.lastColor===null)extra.push('সর্বশেষ ফল Other, তাই Transition প্রমাণ ব্যবহার হয়নি।');
+  box.innerHTML=`<div class="notice ${cls}"><b>${esc(decision)}</b></div>`+
+    p.rows.map(r=>scoreCard(r,p,false)).join('')+
+    `<div class="total-line">তিন রঙের মোট: ${(p.totalHund/100).toFixed(2)}%</div>`+
+    `<div class="stats" style="margin-top:12px"><div class="stat"><small>Winning Percent (Target)</small><b>80%</b></div></div><p class="muted">৮০% হলো প্রদর্শনের জন্য নির্ধারিত লক্ষ্য-মান; এটি হিসাব করা ঐতিহাসিক জয়ের হার নয় এবং পরের রাউন্ডে জেতার নিশ্চয়তা দেয় না।</p>`+
+    (extra.length?`<p class="muted">${extra.map(esc).join('<br>')}</p>`:'')+
+    `<p class="muted"><small>${p.usable===0?'':'নতুন ফলাফল যোগ, Edit বা Delete করলে স্কোর পুনর্গণনা হয়; শুধু রঙের dropdown বদলালে কিছুই বদলায় না। '}এগুলো অতীত ডেটাভিত্তিক মডেল স্কোর—ভবিষ্যৎ ফলাফলের বাস্তব সম্ভাবনা বা নিশ্চয়তা নয়।</small></p>`+explain;
+}
+function renderAnalysis(view){
+  const data=rangeData(view),counts={Red:0,Green:0,Violet:0,Other:0};
+  data.forEach(r=>counts[r.color]++);
+  $('total').textContent=data.length;
+  $('last').textContent=data.length?data[data.length-1].color:'—';
+  const max=Math.max(...Object.values(counts)),w=COLORS.filter(k=>counts[k]===max&&max>0);
+  $('top').textContent=!data.length?'—':w.length>1?'সমান: '+w.join('/'):w[0];
+  $('analysis').innerHTML=COLORS.map(name=>{
+    const n=counts[name],pct=data.length?100*n/data.length:0,c={Red:'--red',Green:'--green',Violet:'--violet',Other:'--other'}[name];
+    return`<div><b>${name}: ${n}</b> (${pct.toFixed(1)}%)${name==='Other'?' <small>— আলাদা, মডেল স্কোরে নেই</small>':''}<div class="bar"><div class="fill" style="width:${pct}%;background:var(${c})"></div></div></div>`}).join('');
+  $('rangeNote').textContent=view.all?`সব গেম মিলিয়ে সারসংক্ষেপ: ${data.length}টি ফলাফল।`:(data.length?`"${view.name}" গেমের ${data.length}টি ফলাফলের ওপর হিসাব (শতাংশ = Other সহ মোটের অংশ)।`:'বিশ্লেষণের জন্য এখনো কোনো ফলাফল নেই।');
+}
+function renderNumberStats(view){
+  const data=view.data.filter(r=>Number.isInteger(r.number)&&r.number>=0&&r.number<=100);
+  $('numberedTotal').textContent=data.length;
+  $('lastNumber').textContent=data.length?data[data.length-1].number:'—';
+  if(!data.length){$('topNumber').textContent='—';$('numberAnalysis').innerHTML='<p class="muted">নম্বরযুক্ত ফলাফল এখনো নেই। নতুন এন্ট্রিতে ০–১০০-এর নম্বর দিন।</p>';$('numberFrequency').innerHTML='';return}
+  const counts=new Map();data.forEach(r=>counts.set(r.number,(counts.get(r.number)||0)+1));
+  const max=Math.max(...counts.values()),tops=[...counts].filter(x=>x[1]===max).map(x=>x[0]).sort((a,b)=>a-b);
+  $('topNumber').textContent=tops.join(', ')+' ('+max+' বার)';
+  const top=[...counts].sort((a,b)=>b[1]-a[1]||a[0]-b[0]).slice(0,12);
+  $('numberAnalysis').innerHTML=top.map(([n,c])=>`<div><b>${n}</b> — ${c} বার (${(100*c/data.length).toFixed(1)}%)<div class="bar"><div class="fill" style="width:${100*c/data.length}%"></div></div></div>`).join('');
+  $('numberFrequency').innerHTML=[...data.slice(-10)].map(r=>`<span class="chip">${r.number}</span>`).join('');
+}
+function renderPatterns(view){
+  const tb=$('transitionTable').querySelector('tbody'),mb=$('modelTable').querySelector('tbody');
+  if(view.all||!view.group){
+    tb.innerHTML='';mb.innerHTML='';
+    ['streak','accuracy'].forEach(i=>$(i).textContent='—');$('sample').textContent=view.all?'—':'0';
+    const msg=view.all?'সব-গেম ভিউতে প্যাটার্ন/backtest বন্ধ—একটি গেম বেছে নিন।':'গেম নেই।';
+    $('streakDetail').textContent=msg;$('backtestDetail').textContent=msg;$('modelNote').textContent=msg;return;
+  }
+  const full=view.data,data=rangeData(view);
+  $('sample').textContent=full.length;
+  $('streak').textContent=data.slice(-5).map(r=>r.color[0]).join(' → ')||'—';
+  const m=transitionMatrix(data);
+  tb.innerHTML=MAIN.map(a=>{const tot=MAIN.reduce((s,b)=>s+m[a][b],0);return`<tr><th>${a}</th>${MAIN.map(b=>`<td>${m[a][b]}${tot?`<small>${(100*m[a][b]/tot).toFixed(0)}%</small>`:''}</td>`).join('')}</tr>`}).join('');
+  const s=streakInfo(data);
+  $('streakDetail').textContent=s?`সর্বশেষ ${s.color} টানা ${s.run} বার এসেছে। শেষ ${Math.min(5,data.length)}টি: ${data.slice(-5).map(r=>r.color).join(' → ')}। এই রেঞ্জে সর্বোচ্চ ধারা — Red ${s.longest.Red}, Green ${s.longest.Green}, Violet ${s.longest.Violet}, Other ${s.longest.Other}।`:'এখনো কোনো ফলাফল নেই।';
+  const ev=evaluateModels(full),base=ev.stats[0];
+  $('accuracy').textContent=base.pred?`${(100*base.hits/base.pred).toFixed(1)}% (${base.hits}/${base.pred})`:'পর্যাপ্ত ডেটা নেই';
+  $('backtestDetail').textContent=base.pred?`সঠিক ${base.hits}/${base.pred} = ${(100*base.hits/base.pred).toFixed(1)}%; পরীক্ষাযোগ্য রাউন্ড ${ev.eligible}, tie/অনির্ধারিত রাউন্ড বাদ ${ev.eligible-base.pred}। এটি একই ডেটার অতীত-পরীক্ষা, ভবিষ্যৎ নির্ভুলতার গ্যারান্টি নয়।`:`কমপক্ষে ১১টি ফলাফল এবং tie ছাড়া পূর্ববর্তী ১০টির একক সর্বাধিক রঙ প্রয়োজন। মোট ধাপ: ${ev.totalSteps}।`;
+  mb.innerHTML=ev.stats.map(x=>`<tr><th>${esc(x.name)}</th><td>${x.hits}/${x.pred}</td><td>${ev.eligible?(100*x.pred/ev.eligible).toFixed(1)+'%':'—'}</td><td>${x.pred?(100*x.hits/x.pred).toFixed(1)+'%':'—'}</td></tr>`).join('');
+  $('modelNote').textContent=ev.eligible?`পরীক্ষাযোগ্য রাউন্ড: ${ev.eligible}${ev.capped?' (সর্বশেষ ১০০০টি)':''}। তিন রঙের মধ্যে এলোমেলো অনুমানে গড়ে ≈ ৩৩.৩% মিলত; কিন্তু রঙের হার অসমান হলে "সব আগের ফলের Majority" আরও কঠিন তুলনা-মান। যে পদ্ধতি এই মানকে স্পষ্টভাবে হারাতে পারে না তার কোনো পূর্বাভাস-ক্ষমতা প্রমাণিত নয়। ছোট নমুনায় ফল অস্থির।`:'কমপক্ষে ১১টি ফলাফল এবং Red/Green/Violet টার্গেট প্রয়োজন।';
+}
+function renderHistory(view){
+  const data=view.data;
+  $('recent').innerHTML=data.slice(-10).map(r=>`<span class="chip ${r.color}">${esc(r.number??'—')} · ${esc(r.color)}</span>`).join('')||'<span class="muted">এখনো কোনো ফলাফল নেই।</span>';
+  const seq=new Map(),cnt=new Map();
+  state.records.forEach(r=>{const k=gameKey(r.game),n=(cnt.get(k)||0)+1;cnt.set(k,n);seq.set(r.id,n)});
+  const list=data.map(r=>({r,n:seq.get(r.id)}));
+  if(ui.histOrder==='new')list.reverse();
+  const shown=list.slice(0,ui.histLimit);
+  $('history').innerHTML=shown.map(({r,n})=>`<li>
+    <span class="chip ${r.color}">${esc(r.color)}</span>
+    <div class="rec-main"><b>Number: ${r.number===null||r.number===undefined?'—':esc(r.number)}</b> · <b>#${n}</b>${view.all?` <span class="gname">${esc(r.game)}</span>`:''}${r.period?` · Period: <b>${esc(r.period)}</b>`:''}<small>${esc(fmtTime(r.at))}</small></div>
+    <div class="actions"><button class="secondary small" data-act="edit" data-id="${esc(r.id)}" aria-label="#${n} Edit">Edit</button><button class="danger small" data-act="del" data-id="${esc(r.id)}" aria-label="#${n} Delete">Delete</button></div>
+  </li>`).join('')||'<li class="muted">এখনো কোনো ফলাফল যোগ করা হয়নি।</li>';
+  const more=$('moreHist');more.classList.toggle('hidden',list.length<=ui.histLimit);
+  more.textContent=`আরও দেখান (${list.length-ui.histLimit}টি বাকি)`;
+  $('histOrder').value=ui.histOrder;
+  $('csvGame').disabled=view.all||!data.length;$('clearGame').disabled=view.all||!data.length;
+}
+function renderData(){
+  $('dlQuarantine').classList.toggle('hidden',!state.quarantine.length);
+  $('dlQuarantine').textContent=`যাচাই-না-হওয়া রেকর্ড ডাউনলোড (${state.quarantine.length})`;
+  $('trashCount').textContent=state.trash.length;
+  $('trashList').innerHTML=state.trash.length?state.trash.map(t=>`<div class="row" style="margin:8px 0"><span style="flex:1 1 200px">${esc(fmtTime(t.at))} — ${t.records.length}টি রেকর্ড (${esc({delete:'Delete','clear-game':'গেম মোছা','clear-all':'সব মোছা','import-replace':'Import প্রতিস্থাপন'}[t.reason]||t.reason)})</span><button class="secondary small" data-act="restore" data-id="${esc(t.id)}">ফেরান</button></div>`).join('')+'<button class="danger small" data-act="empty-trash">ট্র্যাশ স্থায়ীভাবে খালি করুন</button>':'<p class="muted">ট্র্যাশ খালি।</p>';
+}
+function render(){
+  const view=currentView();
+  renderBanners();renderGameSelect(view);renderEntry(view);renderPrediction(view);renderAnalysis(view);renderNumberStats(view);renderPatterns(view);renderHistory(view);renderData();
+}
+
+/* ====================== Events ====================== */
+$('gameSelect').onchange=e=>{
+  if(ui.editingId){resetEntryForm()}
+  state.activeGame=e.target.value;ui.histLimit=30;
+  commit('গেম বদলানো হয়েছে—এই গেমের নিজস্ব ইতিহাস ও স্কোর দেখানো হচ্ছে।');
+};
+function addGame(){
+  const name=cleanName($('newGame').value);
+  if(!name){setStatus('গেমের নাম লিখুন।');$('newGame').focus();return}
+  const k=gameKey(name),ex=gameGroups().find(g=>g.key===k);
+  if(ex){state.activeGame=ex.key;$('newGame').value='';commit(`"${ex.name}" গেমটি আগে থেকেই আছে—এটি নির্বাচন করা হয়েছে।`);return}
+  if(ui.editingId)resetEntryForm();
+  state.games.push(name);state.activeGame=k;$('newGame').value='';ui.histLimit=30;
+  commit(`নতুন গেম "${name}" যোগ হয়েছে।`);
+}
+$('addGame').onclick=addGame;
+$('newGame').addEventListener('keydown',e=>{if(e.key==='Enter')addGame()});
+$('add').onclick=()=>{ui.editingId?saveEdit():addResult($('color').value,'manual')};
+$('cancelEdit').onclick=()=>{resetEntryForm();render();setStatus('Edit বাতিল করা হয়েছে।')};
+$('requirePeriod').onchange=e=>{state.settings.requirePeriod=e.target.checked;commit(e.target.checked?'এখন থেকে Period ID বাধ্যতামূলক।':'Period ID আবার ঐচ্ছিক।')};
+$('range').onchange=render;
+$('histOrder').onchange=e=>{ui.histOrder=e.target.value;render()};
+$('csvGame').onclick=()=>{const v=currentView();if(!v.all&&v.data.length)downloadCSV(v.data,v.name.replace(/[^\w\-]+/g,'_'))};
+$('csvAll').onclick=()=>downloadCSV(state.records,'all');
+$('backup').onclick=downloadBackup;
+$('clearGame').onclick=()=>{
+  const v=currentView();if(v.all||!v.data.length)return;
+  if(!confirm(`"${v.name}" গেমের ${v.data.length}টি ফলাফল মুছবেন? অন্য গেম অক্ষত থাকবে; এই ফলাফলগুলো ট্র্যাশে থাকবে।`))return;
+  const tid=trashPush('clear-game',v.data);
+  state.records=state.records.filter(r=>gameKey(r.game)!==v.key);
+  resetEntryForm();
+  commit(`"${v.name}"-এর ফলাফল মুছে ট্র্যাশে রাখা হয়েছে।`,{undoId:tid});
+};
+$('clearAll').onclick=()=>{
+  if(!state.records.length){setStatus('মোছার মতো কোনো ফলাফল নেই।');return}
+  if(!confirm(`সব গেমের ${state.records.length}টি ফলাফল মুছবেন? আগে JSON ব্যাকআপ ডাউনলোড হবে এবং ডেটা ট্র্যাশে থাকবে।`))return;
+  downloadBackup();
+  const tid=trashPush('clear-all',state.records.slice());
+  state.records=[];state.games=[];state.activeGame='';resetEntryForm();
+  commit('সব ফলাফল মুছে ট্র্যাশে রাখা হয়েছে (ব্যাকআপ ডাউনলোড হয়েছে)।',{undoId:tid});
+};
+$('dlQuarantine').onclick=()=>download(`colour-analyzer-quarantine-${stamp()}.json`,JSON.stringify(state.quarantine,null,2),'application/json');
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    if(f.size>20*1024*1024)throw new Error('ফাইল ২০ MB-এর বেশি');
+    const text=await f.text(),t=text.replace(/^\uFEFF/,'').trim();
+    let list,extra=[];
+    if(t[0]==='{'||t[0]==='['){
+      const obj=JSON.parse(t);list=extractArray(obj);
+      if(!list)throw new Error('ফাইলে রেকর্ডের তালিকা (records) পাওয়া যায়নি');
+      if(obj&&Array.isArray(obj.games))extra=obj.games.filter(x=>typeof x==='string');
+    }else{list=csvToObjects(t)}
+    if(!list.length)throw new Error('ফাইলে কোনো রেকর্ড নেই');
+    prepareImport(f.name,list,extra);
+  }catch(err){
+    openModal(`<h2>Import সম্ভব হয়নি</h2><div class="notice err">ফাইলটি পড়া বা যাচাই করা যায়নি (${esc(err.message||'অজানা ত্রুটি')})। কোনো ডেটা Import করা হয়নি এবং বর্তমান ডেটা অপরিবর্তিত।</div><div class="row"><button class="secondary" data-act="imp-cancel">ঠিক আছে</button></div>`);
+  }finally{e.target.value=''}
+};
+function scanLegacy(){
+  if(!LS){openModal('<h2>পুরোনো ডেটা খুঁজুন</h2><div class="notice err">এই ফাইল-অবস্থান থেকে Local Storage পড়া যাচ্ছে না। পুরোনো অ্যাপ থেকে JSON/CSV ব্যাকআপ নিয়ে এখানে Import করুন।</div><div class="row"><button class="secondary" data-act="imp-cancel">বন্ধ</button></div>');return}
+  const found=[];
+  for(let i=0;i<LS.length;i++){
+    const k=LS.key(i);if(k===KEY)continue;
+    let raw;try{raw=LS.getItem(k)}catch(e){continue}
+    if(!raw||raw.length>20*1024*1024||(raw[0]!=='['&&raw[0]!=='{'))continue;
+    try{
+      const arr=extractArray(JSON.parse(raw));if(!arr||!arr.length)continue;
+      const list=/-v1$/.test(k)?arr.slice().reverse():arr,r=ingest(list);
+      if(r.good.length)found.push({key:k,total:arr.length,good:r.good.length,bad:r.bad.length,list});
+    }catch(e){}
+  }
+  ui.scan=found;
+  openModal(`<h2>পুরোনো ডেটা খুঁজুন</h2>${found.length?`<p>এই ব্রাউজারে (এই ফাইল-অবস্থানে) নিচের ডেটা পাওয়া গেছে। বেছে নিলে আগে যাচাই-পূর্বরূপ দেখানো হবে; মূল ডেটা অপরিবর্তিত থাকবে।</p>`+found.map((f,i)=>`<div class="row" style="margin:8px 0"><span style="flex:1 1 220px"><b>${esc(f.key)}</b><br><small>${f.total}টি এন্ট্রি, বৈধ ${f.good}, অবৈধ ${f.bad}</small></span><button class="secondary small" data-act="scan-pick" data-i="${i}">Import পূর্বরূপ</button></div>`).join(''):'<div class="notice warn">কোনো পুরোনো ডেটা পাওয়া যায়নি। V4/V5 অ্যাপ যদি অন্য ফাইল-অবস্থান বা অন্য ঠিকানা থেকে খোলা হয়ে থাকে, ব্রাউজার ডেটা আলাদা রাখে। সেই অ্যাপ খুলে JSON/CSV ব্যাকআপ নিয়ে এখানে "Import" করুন।</div>'}<div class="row" style="margin-top:10px"><button class="secondary" data-act="imp-cancel">বন্ধ</button></div>`);
+}
+$('scanLegacy').onclick=scanLegacy;
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').classList.contains('hidden'))closeModal()});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const act=b.dataset.act,id=b.dataset.id;
+  if(act==='edit')startEdit(id);
+  else if(act==='del')deleteRecord(id);
+  else if(act==='more-history'){ui.histLimit+=30;render()}
+  else if(act==='undo'||act==='restore'){const m=trashRestore(id);if(m)commit(`${m.added.length}টি ফলাফল ফিরিয়ে আনা হয়েছে${m.dup+m.conflict?` (${m.dup+m.conflict}টি আগে থেকেই আছে/বিরোধপূর্ণ বলে বাদ)`:''}।`);else setStatus('ট্র্যাশে এই এন্ট্রি আর নেই।')}
+  else if(act==='empty-trash'){if(confirm('ট্র্যাশের সব ডেটা স্থায়ীভাবে মুছবেন? এটি আর ফেরানো যাবে না।')){state.trash=[];commit('ট্র্যাশ খালি করা হয়েছে।')}}
+  else if(act==='download-backup')downloadBackup();
+  else if(act==='ack-migration'){if(state.meta.migration)state.meta.migration.ack=true;commit('')}
+  else if(act==='dismiss-notes'){ui.loadNotes=[];render()}
+  else if(act==='dl-corrupt'){if(ui.corruptRaw)download(`colour-analyzer-v6-unreadable-${stamp()}.txt`,ui.corruptRaw,'text/plain')}
+  else if(act==='scan-legacy')scanLegacy();
+  else if(act==='scan-pick'){const f=ui.scan&&ui.scan[Number(b.dataset.i)];if(f)prepareImport(f.key,f.list,[])}
+  else if(act==='imp-merge')applyImport('merge');
+  else if(act==='imp-replace')applyImport('replace');
+  else if(act==='imp-cancel')closeModal();
+});
+window.addEventListener('storage',e=>{
+  if(e.key!==KEY||!LS)return;
+  // Another tab saved: reload so this tab never overwrites newer data with a stale copy.
+  const keepGame=state.activeGame;ui.editingId=null;
+  state={records:[],games:[],activeGame:keepGame,settings:{requirePeriod:false},trash:[],quarantine:[],meta:{}};
+  loadState();resetEntryForm();render();setStatus('অন্য ট্যাবে ডেটা বদলেছে—সর্বশেষ ডেটা লোড করা হয়েছে।');
+});
+
+/* ====================== OCR (lazy-loaded) ====================== */
+let pendingOCRFile=null,previewUrl=null;
+function loadTesseract(){
+  return new Promise((res,rej)=>{
+    if(window.Tesseract)return res();
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload=()=>res();s.onerror=()=>rej(new Error('load'));document.head.appendChild(s);
+  });
+}
+$('screenShot').onchange=e=>{
+  const f=e.target.files[0];pendingOCRFile=f||null;
+  $('addDetected').disabled=true;$('detectedColor').value='';$('ocrText').textContent='';
+  if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null}
+  if(!f){$('shotPreview').classList.add('hidden');return}
+  if(!f.type.startsWith('image/')){pendingOCRFile=null;$('shotStatus').textContent='শুধু image ফাইল নির্বাচন করুন।';return}
+  previewUrl=URL.createObjectURL(f);$('shotPreview').src=previewUrl;$('shotPreview').classList.remove('hidden');
+  $('shotStatus').textContent='ছবি নির্বাচিত। OCR চালান বা নিচে নিজে রং বেছে নিন।';
+};
+$('detectedColor').onchange=()=>{$('addDetected').disabled=!$('detectedColor').value};
+$('readShot').onclick=async()=>{
+  if(!pendingOCRFile){$('shotStatus').textContent='আগে একটি স্ক্রিনশট বেছে নিন।';return}
+  try{
+    $('readShot').disabled=true;$('shotStatus').textContent='OCR লাইব্রেরি লোড হচ্ছে (ইন্টারনেট দরকার)…';
+    await loadTesseract();
+    $('shotStatus').textContent='ছবি থেকে লেখা পড়া হচ্ছে…';
+    const res=await Tesseract.recognize(pendingOCRFile,'eng');
+    const txt=res.data.text||'';$('ocrText').textContent='পড়া লেখা:\n'+txt;
+    const t=txt.toLowerCase(),found=[];
+    if(/\bred\b/.test(t))found.push('Red');if(/\bgreen\b/.test(t))found.push('Green');if(/\bviolet\b|\bpurple\b/.test(t))found.push('Violet');
+    $('detectedColor').value=found.length===1?found[0]:'';
+    $('addDetected').disabled=!$('detectedColor').value;
+    $('shotStatus').textContent=found.length===1?`সম্ভাব্য রং ${found[0]}। যোগ করার আগে স্ক্রিনশট দেখে যাচাই করুন।`:'একটি নির্দিষ্ট রং নিশ্চিতভাবে পড়া যায়নি। নিজে সঠিক রং বেছে নিন।';
+  }catch(err){$('shotStatus').textContent='OCR ব্যর্থ হয়েছে (ইন্টারনেট বা ছবির সমস্যা হতে পারে)। নিজে রং বেছে নিয়েও যোগ করা যায়।'}
+  finally{$('readShot').disabled=false}
+};
+$('addDetected').onclick=()=>{
+  const ok=addResult($('detectedColor').value,'screenshot-ocr');
+  if(ok){$('shotStatus').textContent='যাচাই করা রং যোগ হয়েছে। বল নম্বর এন্ট্রি বক্সে লিখে ম্যানুয়ালি যোগ করুন।';$('addDetected').disabled=true;$('detectedColor').value=''}
+  else $('shotStatus').textContent='ফলাফল যোগ হয়নি — উপরের "ফলাফল যোগ" অংশের লাল বার্তা দেখুন।';
+};
+
+/* ====================== Voice ====================== */
+function spokenSummary(){
+  const v=currentView();
+  if(v.all||!v.group)return'প্রথমে একটি গেম বেছে নিন।';
+  const p=predictionScores(v.data);
+  if(!p.usable)return`${v.name} গেমে এখনো কোনো ফলাফল নেই।`;
+  const parts=p.rows.map(r=>`${r.name} ${r.score.toFixed(1)} শতাংশ`).join(', ');
+  const head=p.tie?'শীর্ষ স্কোর সমান।':p.low?'আত্মবিশ্বাস কম, স্কোর কাছাকাছি।':`সর্বোচ্চ ${p.winners[0]}।`;
+  return`${v.name} গেমের মডেল স্কোর: ${parts}। ${head} এটি অতীত ডেটার পরিসংখ্যান, ভবিষ্যতের নিশ্চয়তা নয়।`;
+}
+function speak(t){
+  if(!('speechSynthesis' in window)){$('voiceStatus').textContent='এই ব্রাউজারে ভয়েস আউটপুট নেই।';return}
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='bn-IN';speechSynthesis.speak(u);
+}
+$('speakResult').onclick=()=>{const t=spokenSummary();$('voiceStatus').textContent=t;speak(t)};
+$('askVoice').onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){$('voiceStatus').textContent='এই ব্রাউজারে Speech Recognition নেই। সমর্থিত Chrome-এ চেষ্টা করুন।';return}
+  try{
+    const rec=new SR();rec.lang='bn-IN';
+    rec.onresult=e=>{const q=e.results[0][0].transcript,t=spokenSummary();$('voiceStatus').textContent='আপনি বলেছেন: '+q+'। '+t;speak(t)};
+    rec.onerror=e=>{$('voiceStatus').textContent='ভয়েস ইনপুট ব্যর্থ: '+e.error};
+    rec.start();$('voiceStatus').textContent='শুনছি…';
+  }catch(e){$('voiceStatus').textContent='ভয়েস ইনপুট শুরু করা যায়নি—একটু পরে আবার চেষ্টা করুন।'}
+};
+
+/* ====================== Start ====================== */
+loadState();
+state.records.forEach(r=>{r.game=FIXED_GAME});state.games=[FIXED_GAME];state.activeGame=gameKey(FIXED_GAME);
+render();
+if(LS&&navigator.storage&&typeof navigator.storage.persist==='function'){try{navigator.storage.persist()}catch(e){}}
+</script>
+</body>
+</html>
